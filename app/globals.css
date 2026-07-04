@@ -60,6 +60,96 @@
   }
 }
 
+/* Custom select styling — nice chevron, no native arrow */
+select.input,
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230B5D4B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem !important;
+}
+select.input:hover {
+  border-color: rgba(11, 93, 75, 0.35);
+}
+select option {
+  padding: 8px;
+  color: #14211d;
+}
+
+/* Custom checkboxes */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
+  border-radius: 0.4rem;
+  background: #fff;
+  display: inline-grid;
+  place-content: center;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+input[type="checkbox"]:hover {
+  border-color: #0b5d4b;
+}
+input[type="checkbox"]:checked {
+  background: #0b5d4b;
+  border-color: #0b5d4b;
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  width: 0.32rem;
+  height: 0.62rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(11, 93, 75, 0.15);
+}
+
+/* Radio */
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+  background: #fff;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+input[type="radio"]:checked {
+  border-color: #0b5d4b;
+}
+input[type="radio"]:checked::after {
+  content: "";
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: #0b5d4b;
+}
+
+/* Nicer date inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
