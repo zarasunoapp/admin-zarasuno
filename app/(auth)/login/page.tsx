@@ -65,11 +65,6 @@ export default function LoginPage({
           <div className="mt-8">
             <LoginForm notAuthorized={searchParams.error === "not-authorized"} />
           </div>
-
-          <div className="mt-8 rounded-2xl border border-black/5 bg-white p-4 text-center text-sm text-muted shadow-card">
-            Demo admin · <span className="font-semibold text-ink">demo@zarasuno.app</span> ·{" "}
-            <span className="font-semibold text-ink">ZaraSuno123!</span>
-          </div>
         </div>
       </div>
     </div>

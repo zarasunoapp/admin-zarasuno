@@ -68,7 +68,7 @@ export function LoginForm({ notAuthorized }: { notAuthorized?: boolean }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="demo@zarasuno.app"
+            placeholder="sales@zarasuno.app"
           />
         </div>
       </div>
