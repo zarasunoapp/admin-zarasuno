@@ -17,6 +17,15 @@ import {
   deleteChapter,
   reorderChapters,
 } from "@/lib/repositories/chapterRepository";
+import { signedAudioUrl } from "@/lib/repositories/storageRepository";
+
+export async function getChapterAudioUrlAction(audioPath: string) {
+  await requireAdmin();
+  if (!audioPath) return { url: null as string | null };
+  if (/^https?:\/\//.test(audioPath)) return { url: audioPath };
+  const url = await signedAudioUrl(audioPath, 3600);
+  return { url };
+}
 
 const PATH = "/admin/books";
 

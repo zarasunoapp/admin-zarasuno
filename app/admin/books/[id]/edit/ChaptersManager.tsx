@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FileUploader } from "@/components/admin/FileUploader";
+import { ChapterAudio } from "./ChapterAudio";
 import {
   createChapterAction,
   bulkCreateChaptersAction,
@@ -288,10 +289,12 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
                     <span className="ml-2 rounded bg-gold-50 px-1.5 py-0.5 text-xs text-gold-600">Preview</span>
                   )}
                 </div>
-                <div className="text-xs text-muted">
-                  {c.audio_path ? "Audio uploaded" : "No audio"} ·{" "}
-                  {Math.floor((c.duration_seconds || 0) / 60)}:
-                  {String((c.duration_seconds || 0) % 60).padStart(2, "0")}
+                <div className="mt-1 flex items-center gap-2">
+                  <ChapterAudio audioPath={c.audio_path} />
+                  <span className="text-xs text-muted">
+                    {Math.floor((c.duration_seconds || 0) / 60)}:
+                    {String((c.duration_seconds || 0) % 60).padStart(2, "0")}
+                  </span>
                 </div>
               </div>
             </div>
