@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parsePageParams } from "@/lib/utils";
 import { listPromocodes } from "@/lib/repositories/promocodeRepository";
+import { listAllCoinPackages } from "@/lib/repositories/coinPackageRepository";
 import {
   createPromocodeAction,
   updatePromocodeAction,
@@ -14,24 +15,44 @@ import { bulkDeleteAction } from "../bulk-actions";
 
 export const dynamic = "force-dynamic";
 
-const fields = [
-  { name: "name", label: "Name", required: true },
-  { name: "code", label: "Code", required: true },
-  { name: "coin_reward", label: "Value (Coins)", type: "number" as const, required: true },
-  { name: "starts_at", label: "Start Date", type: "date" as const },
-  { name: "expires_at", label: "End Date", type: "date" as const },
-  { name: "max_uses", label: "Number Of Redeem", type: "number" as const },
-  { name: "per_user_limit", label: "Maximum Per Use", type: "number" as const },
-  { name: "is_active", label: "Active", type: "toggle" as const },
-];
-
 export default async function PromocodesPage({
   searchParams,
 }: {
   searchParams: Record<string, string>;
 }) {
   const params = parsePageParams(searchParams);
-  const { rows, count, page, perPage } = await listPromocodes(params);
+  const [{ rows, count, page, perPage }, packages] = await Promise.all([
+    listPromocodes(params),
+    listAllCoinPackages(),
+  ]);
+
+  const fields = [
+    { name: "name", label: "Name", required: true },
+    { name: "code", label: "Code", required: true },
+    {
+      name: "reward_type",
+      label: "Reward Type",
+      type: "select" as const,
+      required: true,
+      options: [
+        { value: "coins", label: "Free Coins" },
+        { value: "discount", label: "Package Discount (%)" },
+      ],
+    },
+    { name: "coin_reward", label: "Value (Coins) — for Free Coins", type: "number" as const },
+    { name: "discount_percent", label: "Discount % — for Package Discount", type: "number" as const },
+    {
+      name: "package_id",
+      label: "Apply to Package (optional; blank = all)",
+      type: "select" as const,
+      options: packages.map((p: any) => ({ value: p.id, label: p.name })),
+    },
+    { name: "starts_at", label: "Start Date", type: "date" as const },
+    { name: "expires_at", label: "End Date", type: "date" as const },
+    { name: "max_uses", label: "Number Of Redeem", type: "number" as const },
+    { name: "per_user_limit", label: "Maximum Per Use", type: "number" as const },
+    { name: "is_active", label: "Active", type: "toggle" as const },
+  ];
 
   const columns: Column<any>[] = [
     { key: "sr", label: "SR No", render: (_r, i) => (page - 1) * perPage + i + 1 },
@@ -44,6 +65,14 @@ export default async function PromocodesPage({
           {r.code}
         </span>
       ),
+    },
+    {
+      key: "reward",
+      label: "Reward",
+      render: (r) =>
+        r.reward_type === "discount"
+          ? `${r.discount_percent || 0}% off`
+          : `${r.coin_reward || 0} coins`,
     },
     { key: "is_active", label: "Status", render: (r) => <StatusBadge status={r.is_active ? "active" : "inactive"} /> },
     {

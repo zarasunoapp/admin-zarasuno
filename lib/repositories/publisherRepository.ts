@@ -24,14 +24,22 @@ export async function getPublisher(id: string) {
   return data;
 }
 
-export async function createPublisher(values: { name: string; email?: string | null }) {
+export async function createPublisher(values: {
+  name: string;
+  email?: string | null;
+  country?: string | null;
+  password?: string | null;
+}) {
   const db = createSupabaseAdminClient();
   const { data, error } = await db.from(TABLE).insert(values).select().single();
   if (error) throw new Error(error.message);
   return data;
 }
 
-export async function updatePublisher(id: string, values: { name?: string; email?: string | null }) {
+export async function updatePublisher(
+  id: string,
+  values: { name?: string; email?: string | null; country?: string | null; password?: string | null }
+) {
   const db = createSupabaseAdminClient();
   const { data, error } = await db.from(TABLE).update(values).eq("id", id).select().single();
   if (error) throw new Error(error.message);

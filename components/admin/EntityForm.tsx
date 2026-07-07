@@ -10,7 +10,7 @@ import { toast } from "@/lib/toast";
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "email" | "number" | "textarea" | "select" | "toggle" | "date" | "datetime-local" | "file";
+  type?: "text" | "email" | "password" | "number" | "textarea" | "select" | "toggle" | "date" | "datetime-local" | "file";
   options?: { value: string; label: string }[];
   required?: boolean;
   placeholder?: string;

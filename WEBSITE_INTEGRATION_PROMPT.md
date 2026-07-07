@@ -37,7 +37,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<the anon key>
 
 **Coins / commerce**
 - `coin_packages` — `id, name, price, coin_amount, bundle_id, status, is_active, description`
-- `promocodes` — `id, name, code, coin_reward, user_id (nullable = any user), starts_at, expires_at, max_uses, per_user_limit, is_active`
+- `promocodes` — `id, name, code, coin_reward, starts_at, expires_at, max_uses, used_count, per_user_limit, is_active, reward_type ('coins' | 'discount'), discount_percent, package_id (nullable)`. Two modes: **`reward_type='coins'`** → grant `coin_reward` free coins; **`reward_type='discount'`** → **`discount_percent`% off** a coin-package purchase (only `package_id` if set, else any package).
 - `promocode_redemptions` — `id, promocode_id, user_id, coins_awarded, created_at`
 - `transactions` — `id, user_id, type ('purchase'|'spend'|'admin_grant'), coin_change (+/-), amount, payment_provider, payment_status ('completed'|'pending'|'failed'), coin_package_id, book_id, note, created_at`
 - `book_unlocks` — `id, user_id, book_id, method ('purchase'|'admin'), created_at`
@@ -49,7 +49,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<the anon key>
 - `listening_progress` — `id, user_id, book_id, position_seconds, is_completed, updated_at`
 
 **Website content (fully admin-controlled)**
-- `app_settings` — key/value jsonb. Keys: `home_hero`, `brand_name`, `logo_url`, `primary_color`, `accent_color`, `signup_free_coins`, `contact_email`, `socials`.
+- `app_settings` — key/value jsonb. Keys: `home_hero`, `brand_name`, `logo_url`, `primary_color`, `accent_color`, `signup_free_coins`, `contact_email`, `socials`, and `featured_books` (an **array** of `{ id, book_id (nullable), title, image_url, sort_order, is_active }` — the admin CRUDs these; render the `is_active` ones, ordered by `sort_order`, in the website's **Featured Books** section using `image_url`, linking to `book_id` when set).
 - `payment_configs` — `id, country, provider ('jazzcash'|'easypaisa'|'bank'|'stripe'), display_name, description, account_details, qr_code_url, is_active, sort_order`. The admin CRUDs these; on the coins/checkout page show the `is_active` rows for the user's provider with their **`qr_code_url`** image and `account_details`.
 - `home_carousels` — `id, title, type, category_id, subcategory_id, language_code, collection_id, book_limit, requires_auth, sort_order, is_active`
 - `carousel_books` — `carousel_id, book_id, sort_order` (only for `type='manual'`)
@@ -97,7 +97,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<the anon key>
 - Coins page → `coin_packages` where `is_active=true`, order by `price`. On successful payment insert a `transactions` row `{ type:'purchase', coin_package_id, amount, coin_change:+coin_amount, payment_provider, payment_status }` and add coins to `profiles.coin_balance`.
   - Card/stripe/apple/google → `payment_status:'completed'` immediately.
   - JazzCash / EasyPaisa / manual → insert `payment_status:'pending'` (the admin approves it in the panel, which credits the coins). Show the active `payment_configs` rows (`display_name`, `account_details`, `qr_code_url` image) for the user's provider so they can pay and submit proof/reference.
-- **Redeem promocode** (server route): find `promocodes` by `code`, valid if `is_active`, within `starts_at..expires_at`, under `max_uses`, under `per_user_limit` for this user, and (`user_id` is null OR equals this user). On success add `coin_reward` to balance, insert `promocode_redemptions`, and a `transactions { type:'admin_grant'/'promo', coin_change:+coin_reward, payment_provider:'promo', payment_status:'completed' }`.
+- **Redeem promocode** (server route): find `promocodes` by `code`, valid if `is_active`, within `starts_at..expires_at`, under `max_uses`, under `per_user_limit` for this user. Then branch on `reward_type`:
+  - `'coins'` → add `coin_reward` to balance, insert `promocode_redemptions`, and a `transactions { type:'admin_grant', coin_change:+coin_reward, payment_provider:'promo', payment_status:'completed' }`.
+  - `'discount'` → **don't add coins**; instead apply `discount_percent`% off the coin-package price at checkout (restrict to `package_id` when set). Record the redemption when the discounted purchase completes.
 
 ## 8. Auth, profile, notifications, CMS
 - **Signup** → create `auth` user + `profiles` row; grant starting coins from `app_settings.signup_free_coins` (as an `admin_grant` transaction).

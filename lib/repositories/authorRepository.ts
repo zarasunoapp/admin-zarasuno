@@ -31,6 +31,8 @@ export async function createAuthor(values: {
   email?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  country?: string | null;
+  password?: string | null;
 }) {
   const db = createSupabaseAdminClient();
   const { data, error } = await db.from(TABLE).insert(values).select().single();

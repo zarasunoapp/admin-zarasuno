@@ -16,6 +16,7 @@ import {
   updateChapter,
   deleteChapter,
   reorderChapters,
+  renameChapter,
 } from "@/lib/repositories/chapterRepository";
 import { signedAudioUrl } from "@/lib/repositories/storageRepository";
 
@@ -35,9 +36,10 @@ function num(v: FormDataEntryValue | null) {
 
 function parseBook(formData: FormData) {
   const metadata = {
-    display_title: formData.get("display_title") || null,
     author_2_id: formData.get("author_2_id") || null,
-    author_country: formData.get("author_country") || null,
+    author_3_id: formData.get("author_3_id") || null,
+    author_4_id: formData.get("author_4_id") || null,
+    decade_published: formData.get("decade_published") || null,
     isbn10: formData.get("isbn10") || null,
     isbn13: formData.get("isbn13") || null,
     edition: formData.get("edition") || null,
@@ -60,12 +62,10 @@ function parseBook(formData: FormData) {
     book_type: String(formData.get("book_type") || "summary"),
     author_id: (formData.get("author_id") as string) || null,
     publisher_id: (formData.get("publisher_id") as string) || null,
-    publisher_country: (formData.get("publisher_country") as string) || null,
     year_published: num(formData.get("year_published")),
     subcategory_id: (formData.get("subcategory_id") as string) || null,
     language_code: (formData.get("language_code") as string) || null,
     is_free: formData.get("is_free") === "true",
-    is_premium: formData.get("is_premium") === "true",
     coin_price: num(formData.get("coin_price")) ?? 0,
     show_ads: formData.get("show_ads") === "true",
     is_published: formData.get("is_published") === "true",
@@ -121,7 +121,7 @@ export async function createChapterAction(bookId: string, formData: FormData) {
       book_id: bookId,
       chapter_number: Number(formData.get("chapter_number") || 1),
       title: String(formData.get("title")),
-      audio_path: (formData.get("audio_path") as string) || null,
+      audio_path: (formData.get("audio_path") as string) || "",
       duration_seconds: num(formData.get("duration_seconds")),
       is_preview: formData.get("is_preview") === "true",
     });
@@ -148,12 +148,20 @@ export async function updateChapterAction(id: string, bookId: string, formData: 
   await requireAdmin();
   try {
     await updateChapter(id, bookId, {
-      chapter_number: Number(formData.get("chapter_number") || 1),
       title: String(formData.get("title")),
-      audio_path: (formData.get("audio_path") as string) || null,
-      duration_seconds: num(formData.get("duration_seconds")),
+      audio_path: (formData.get("audio_path") as string) || "",
       is_preview: formData.get("is_preview") === "true",
     });
+    revalidatePath(`/admin/books/${bookId}/edit`);
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+export async function renameChapterAction(id: string, bookId: string, title: string) {
+  await requireAdmin();
+  try {
+    await renameChapter(id, title.trim() || "Untitled");
     revalidatePath(`/admin/books/${bookId}/edit`);
   } catch (e: any) {
     return { error: e.message };

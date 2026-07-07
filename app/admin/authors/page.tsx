@@ -13,6 +13,8 @@ const fields = [
   { name: "name", label: "Author Name", required: true },
   { name: "designation", label: "Designation" },
   { name: "email", label: "Email", type: "email" as const },
+  { name: "country", label: "Author Country" },
+  { name: "password", label: "Password", type: "password" as const },
   { name: "avatar_url", label: "Avatar", type: "file" as const, bucket: "authors" },
   { name: "bio", label: "Bio", type: "textarea" as const },
 ];
@@ -46,6 +48,7 @@ export default async function AuthorsPage({
     },
     { key: "designation", label: "Designation", render: (r) => r.designation || "—" },
     { key: "email", label: "Email", render: (r) => r.email || "—" },
+    { key: "country", label: "Country", render: (r) => r.country || "—" },
     {
       key: "action",
       label: "Action",

@@ -41,10 +41,9 @@ export default async function ConsumptionReport({
               <th className="px-5 py-3">Book Type</th>
               <th className="px-5 py-3">Publisher</th>
               <th className="px-5 py-3">Book Name</th>
-              <th className="px-5 py-3">Number of Users</th>
               <th className="px-5 py-3">Total Time (min)</th>
               <th className="px-5 py-3">Finish Clicked</th>
-              <th className="px-5 py-3">Consumption Share</th>
+              <th className="px-5 py-3">Number of Purchases</th>
             </tr>
           </thead>
           <tbody>
@@ -54,15 +53,14 @@ export default async function ConsumptionReport({
                 <td className="px-5 py-3 capitalize">{r.book_type}</td>
                 <td className="px-5 py-3">{r.publisher_name}</td>
                 <td className="px-5 py-3 font-medium">{r.book_name}</td>
-                <td className="px-5 py-3">{r.number_of_users}</td>
                 <td className="px-5 py-3">{r.total_minutes}</td>
                 <td className="px-5 py-3">{r.finish_clicked}</td>
-                <td className="px-5 py-3">{r.consumption_share}</td>
+                <td className="px-5 py-3">{r.number_of_purchases}</td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-muted">
+                <td colSpan={7} className="px-5 py-10 text-center text-muted">
                   No data for selected filters.
                 </td>
               </tr>

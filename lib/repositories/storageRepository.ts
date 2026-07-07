@@ -18,6 +18,19 @@ export async function uploadFile(bucket: string, file: File, prefix = "") {
   return { path, url: data.publicUrl };
 }
 
+export async function createSignedUpload(bucket: string, filename: string, prefix = "") {
+  const db = createSupabaseAdminClient();
+  const ext = filename.split(".").pop();
+  const path = `${prefix}${crypto.randomUUID()}.${ext}`;
+  const { data, error } = await db.storage.from(bucket).createSignedUploadUrl(path);
+  if (error) throw new Error(error.message);
+  let stored = path;
+  if (!PRIVATE_BUCKETS.has(bucket)) {
+    stored = db.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  }
+  return { path, token: data.token, stored };
+}
+
 export async function removeFile(bucket: string, path: string) {
   const db = createSupabaseAdminClient();
   await db.storage.from(bucket).remove([path]);

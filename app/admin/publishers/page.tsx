@@ -16,8 +16,10 @@ import { bulkDeleteAction } from "../bulk-actions";
 export const dynamic = "force-dynamic";
 
 const fields = [
-  { name: "name", label: "Name", required: true, colSpan: 2 as const },
-  { name: "email", label: "Email", type: "email" as const, colSpan: 2 as const },
+  { name: "name", label: "Name", required: true },
+  { name: "email", label: "Email", type: "email" as const },
+  { name: "country", label: "Publisher Country" },
+  { name: "password", label: "Password", type: "password" as const },
 ];
 
 export default async function PublishersPage({
@@ -32,6 +34,7 @@ export default async function PublishersPage({
     { key: "sr", label: "SR No", render: (_r, i) => (page - 1) * perPage + i + 1 },
     { key: "name", label: "Name" },
     { key: "email", label: "Email", render: (r) => r.email || "—" },
+    { key: "country", label: "Country", render: (r) => r.country || "—" },
     {
       key: "action",
       label: "Action",

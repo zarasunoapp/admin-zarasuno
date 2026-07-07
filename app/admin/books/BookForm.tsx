@@ -48,9 +48,6 @@ export function BookForm({
         <Field label="Book Title *">
           <input name="title" required defaultValue={defaults?.title} className="input" />
         </Field>
-        <Field label="Main / Display Title">
-          <input name="display_title" defaultValue={meta.display_title || ""} className="input" />
-        </Field>
         <Field label="Subtitle">
           <input name="subtitle" defaultValue={defaults?.subtitle} className="input" />
         </Field>
@@ -88,8 +85,25 @@ export function BookForm({
             ))}
           </select>
         </Field>
-        <Field label="Country of Author">
-          <input name="author_country" defaultValue={meta.author_country || ""} className="input" />
+        <Field label="Author 3">
+          <select name="author_3_id" defaultValue={meta.author_3_id || ""} className="input">
+            <option value="">None</option>
+            {authors.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Author 4">
+          <select name="author_4_id" defaultValue={meta.author_4_id || ""} className="input">
+            <option value="">None</option>
+            {authors.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label="Publisher">
           <select name="publisher_id" defaultValue={defaults?.publisher_id || ""} className="input">
@@ -101,11 +115,16 @@ export function BookForm({
             ))}
           </select>
         </Field>
-        <Field label="Country of Publisher">
-          <input name="publisher_country" defaultValue={defaults?.publisher_country} className="input" />
-        </Field>
         <Field label="Year Published">
           <input name="year_published" type="number" defaultValue={defaults?.year_published} className="input" />
+        </Field>
+        <Field label="Decade Published">
+          <input
+            name="decade_published"
+            defaultValue={meta.decade_published || ""}
+            placeholder="e.g. 2020s"
+            className="input"
+          />
         </Field>
       </Section>
 
@@ -141,12 +160,6 @@ export function BookForm({
       <Section title="Access & Pricing">
         <Field label="Free Book">
           <select name="is_free" defaultValue={defaults?.is_free ? "true" : "false"} className="input">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-        </Field>
-        <Field label="Is Premium">
-          <select name="is_premium" defaultValue={defaults?.is_premium ? "true" : "false"} className="input">
             <option value="false">No</option>
             <option value="true">Yes</option>
           </select>

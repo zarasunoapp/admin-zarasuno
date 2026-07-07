@@ -15,6 +15,8 @@ export async function createPublisherAction(formData: FormData) {
     await createPublisher({
       name: String(formData.get("name")),
       email: (formData.get("email") as string) || null,
+      country: (formData.get("country") as string) || null,
+      password: (formData.get("password") as string) || null,
     });
     revalidatePath("/admin/publishers");
   } catch (e: any) {
@@ -28,6 +30,8 @@ export async function updatePublisherAction(id: string, formData: FormData) {
     await updatePublisher(id, {
       name: String(formData.get("name")),
       email: (formData.get("email") as string) || null,
+      country: (formData.get("country") as string) || null,
+      password: (formData.get("password") as string) || null,
     });
     revalidatePath("/admin/publishers");
   } catch (e: any) {

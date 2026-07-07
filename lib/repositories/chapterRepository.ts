@@ -18,7 +18,18 @@ export async function createChapter(values: {
   is_preview?: boolean;
 }) {
   const db = createSupabaseAdminClient();
-  const { data, error } = await db.from(TABLE).insert(values).select().single();
+  const { data: last } = await db
+    .from(TABLE)
+    .select("chapter_number")
+    .eq("book_id", values.book_id)
+    .order("chapter_number", { ascending: false })
+    .limit(1);
+  const nextNumber = (last?.[0]?.chapter_number ?? 0) + 1;
+  const { data, error } = await db
+    .from(TABLE)
+    .insert({ ...values, chapter_number: nextNumber, audio_path: values.audio_path || "" })
+    .select()
+    .single();
   if (error) throw new Error(error.message);
   await recomputeBookStats(values.book_id);
   return data;
@@ -40,7 +51,7 @@ export async function bulkCreateChapters(
     book_id: bookId,
     chapter_number: next++,
     title: r.title,
-    audio_path: r.audio_path ?? null,
+    audio_path: r.audio_path || "",
     duration_seconds: r.duration_seconds ?? null,
     is_preview: r.is_preview ?? false,
   }));
@@ -66,12 +77,25 @@ export async function deleteChapter(id: string, bookId: string) {
 
 export async function reorderChapters(bookId: string, orderedIds: string[]) {
   const db = createSupabaseAdminClient();
+  // Phase 1: move all out of the 1..N range to avoid unique(book_id, chapter_number) collisions.
+  await Promise.all(
+    orderedIds.map((id, index) =>
+      db.from(TABLE).update({ chapter_number: 100000 + index }).eq("id", id)
+    )
+  );
+  // Phase 2: assign the final sequential numbers.
   await Promise.all(
     orderedIds.map((id, index) =>
       db.from(TABLE).update({ chapter_number: index + 1 }).eq("id", id)
     )
   );
   await recomputeBookStats(bookId);
+}
+
+export async function renameChapter(id: string, title: string) {
+  const db = createSupabaseAdminClient();
+  const { error } = await db.from(TABLE).update({ title }).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 export async function recomputeBookStats(bookId: string) {

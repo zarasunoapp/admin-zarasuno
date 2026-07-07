@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil } from "lucide-react";
+import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil, Clock } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FileUploader } from "@/components/admin/FileUploader";
+import { uploadFileToStorage } from "@/components/admin/upload";
 import { ChapterAudio } from "./ChapterAudio";
 import {
   createChapterAction,
   bulkCreateChaptersAction,
   updateChapterAction,
+  renameChapterAction,
   deleteChapterAction,
   reorderChaptersAction,
 } from "../../actions";
@@ -37,6 +39,19 @@ function detectDuration(file: File): Promise<number> {
   });
 }
 
+function mmss(s: number) {
+  return `${Math.floor(s / 60)}:${String(Math.round(s) % 60).padStart(2, "0")}`;
+}
+
+function totalLength(s: number) {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = Math.round(s % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
 export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters: any[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -46,11 +61,42 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [editError, setEditError] = useState("");
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const dragY = useRef(0);
 
   useEffect(() => {
     setItems(chapters);
   }, [chapters]);
+
+  // Auto-scroll the window while dragging near the top/bottom edge
+  useEffect(() => {
+    if (dragIndex === null) return;
+    let raf = 0;
+    const onDragOver = (e: DragEvent) => {
+      dragY.current = e.clientY;
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", onDragOver);
+    const tick = () => {
+      const y = dragY.current;
+      const h = window.innerHeight;
+      const edge = 110;
+      if (y > 0 && y < edge) window.scrollBy(0, -Math.ceil((edge - y) / 5));
+      else if (y > h - edge) window.scrollBy(0, Math.ceil((y - (h - edge)) / 5));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      window.removeEventListener("dragover", onDragOver);
+      cancelAnimationFrame(raf);
+    };
+  }, [dragIndex]);
+
+  const totalSeconds =
+    items.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) +
+    staged.reduce((sum, s) => sum + (s.duration || 0), 0);
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
@@ -72,14 +118,9 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
         const duration = await detectDuration(file);
         setStaged((prev) => prev.map((s) => (s.key === key ? { ...s, duration } : s)));
         try {
-          const fd = new FormData();
-          fd.append("bucket", "book-audio");
-          fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Upload failed");
+          const stored = await uploadFileToStorage("book-audio", file);
           setStaged((prev) =>
-            prev.map((s) => (s.key === key ? { ...s, audioPath: data.path, status: "done" } : s))
+            prev.map((s) => (s.key === key ? { ...s, audioPath: stored, status: "done" } : s))
           );
         } catch (err: any) {
           setStaged((prev) =>
@@ -128,6 +169,7 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
   }
 
   function remove(id: string) {
+    setItems((prev) => prev.filter((c) => c.id !== id)); // optimistic
     startTransition(async () => {
       await deleteChapterAction(id, bookId);
       router.refresh();
@@ -143,6 +185,16 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
         setEditing(null);
         router.refresh();
       }
+    });
+  }
+
+  function commitRename(id: string) {
+    const title = renameDraft.trim() || "Untitled";
+    setItems((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c))); // optimistic
+    setRenameId(null);
+    startTransition(async () => {
+      await renameChapterAction(id, bookId, title);
+      router.refresh();
     });
   }
 
@@ -173,26 +225,23 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
 
   return (
     <div className="card p-6" id="chapters">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-base font-bold text-ink">Chapters</h3>
-          <p className="text-xs text-muted">Bulk import audio files or drag rows to reorder</p>
+          <p className="text-xs text-muted">Double-click a name to rename · drag rows to reorder</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">
+            <Clock className="h-3.5 w-3.5" />
+            {items.length + staged.length} chapters · {totalLength(totalSeconds)}
+          </span>
           <button className="btn-ghost" onClick={addEmpty} disabled={pending}>
             <Plus className="h-4 w-4" /> Empty Chapter
           </button>
           <button className="btn-primary" onClick={() => fileRef.current?.click()}>
             <Upload className="h-4 w-4" /> Import Audio Files
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="audio/*"
-            multiple
-            className="hidden"
-            onChange={onFiles}
-          />
+          <input ref={fileRef} type="file" accept="audio/*" multiple className="hidden" onChange={onFiles} />
         </div>
       </div>
 
@@ -219,24 +268,19 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
           <div className="space-y-2">
             {staged.map((s, i) => (
               <div key={s.key} className="flex items-center gap-3 rounded-lg bg-white p-2.5 shadow-sm">
-                <span className="w-6 text-center text-xs font-semibold text-muted">
-                  {items.length + i + 1}
-                </span>
+                <span className="w-6 text-center text-xs font-semibold text-muted">{items.length + i + 1}</span>
                 <input
                   value={s.title}
                   onChange={(e) => patchStaged(s.key, { title: e.target.value })}
                   placeholder="Chapter name"
                   className="input flex-1 py-1.5"
                 />
-                <span className="w-16 text-right text-xs text-muted">
-                  {Math.floor(s.duration / 60)}:{String(s.duration % 60).padStart(2, "0")}
-                </span>
+                <span className="w-16 text-right text-xs text-muted">{mmss(s.duration)}</span>
                 <label className="flex items-center gap-1.5 text-xs text-muted">
                   <input
                     type="checkbox"
                     checked={s.isPreview}
                     onChange={(e) => patchStaged(s.key, { isPreview: e.target.checked })}
-                    className="h-4 w-4 accent-brand"
                   />
                   Preview
                 </label>
@@ -262,7 +306,7 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
         {items.map((c, i) => (
           <div
             key={c.id}
-            draggable
+            draggable={renameId !== c.id}
             onDragStart={() => setDragIndex(i)}
             onDragOver={(e) => {
               e.preventDefault();
@@ -277,28 +321,46 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
               overIndex === i && dragIndex !== null ? "border-brand bg-brand-50/50" : "border-black/5"
             } ${dragIndex === i ? "opacity-40" : ""}`}
           >
-            <div className="flex items-center gap-3">
-              <GripVertical className="h-4 w-4 cursor-grab text-muted active:cursor-grabbing" />
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ivory text-xs font-bold text-brand">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <GripVertical className="h-4 w-4 flex-shrink-0 cursor-grab text-muted active:cursor-grabbing" />
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-ivory text-xs font-bold text-brand">
                 {c.chapter_number}
               </div>
-              <div>
-                <div className="text-sm font-semibold">
-                  {c.title}
-                  {c.is_preview && (
-                    <span className="ml-2 rounded bg-gold-50 px-1.5 py-0.5 text-xs text-gold-600">Preview</span>
-                  )}
-                </div>
+              <div className="min-w-0 flex-1">
+                {renameId === c.id ? (
+                  <input
+                    autoFocus
+                    value={renameDraft}
+                    onChange={(e) => setRenameDraft(e.target.value)}
+                    onBlur={() => commitRename(c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitRename(c.id);
+                      if (e.key === "Escape") setRenameId(null);
+                    }}
+                    className="input py-1"
+                  />
+                ) : (
+                  <div
+                    className="cursor-text truncate text-sm font-semibold"
+                    title="Double-click to rename"
+                    onDoubleClick={() => {
+                      setRenameId(c.id);
+                      setRenameDraft(c.title);
+                    }}
+                  >
+                    {c.title}
+                    {c.is_preview && (
+                      <span className="ml-2 rounded bg-gold-50 px-1.5 py-0.5 text-xs text-gold-600">Preview</span>
+                    )}
+                  </div>
+                )}
                 <div className="mt-1 flex items-center gap-2">
                   <ChapterAudio audioPath={c.audio_path} />
-                  <span className="text-xs text-muted">
-                    {Math.floor((c.duration_seconds || 0) / 60)}:
-                    {String((c.duration_seconds || 0) % 60).padStart(2, "0")}
-                  </span>
+                  <span className="text-xs text-muted">{mmss(c.duration_seconds || 0)}</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex flex-shrink-0 items-center gap-1">
               <button
                 onClick={() => {
                   setEditError("");
@@ -324,16 +386,8 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
 
       <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit Chapter">
         {editing && (
-          <form action={saveEdit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form action={saveEdit} className="space-y-4">
             <div>
-              <label className="label">Chapter Number</label>
-              <input name="chapter_number" type="number" defaultValue={editing.chapter_number} className="input" />
-            </div>
-            <div>
-              <label className="label">Duration (seconds)</label>
-              <input name="duration_seconds" type="number" defaultValue={editing.duration_seconds || 0} className="input" />
-            </div>
-            <div className="sm:col-span-2">
               <label className="label">Chapter Name</label>
               <input name="title" required defaultValue={editing.title} className="input" />
             </div>
@@ -344,12 +398,12 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
                 <option value="true">Yes</option>
               </select>
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <label className="label">Replace Audio (optional)</label>
               <FileUploader bucket="book-audio" name="audio_path" accept="audio/*" defaultValue={editing.audio_path || ""} label="Replace Audio" />
             </div>
-            {editError && <p className="text-sm text-red-500 sm:col-span-2">{editError}</p>}
-            <div className="flex justify-end gap-3 sm:col-span-2">
+            {editError && <p className="text-sm text-red-500">{editError}</p>}
+            <div className="flex justify-end gap-3">
               <button type="button" className="btn-ghost" onClick={() => setEditing(null)}>
                 Cancel
               </button>

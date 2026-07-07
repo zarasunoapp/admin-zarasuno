@@ -11,6 +11,8 @@ function parse(formData: FormData) {
     name: String(formData.get("name")),
     designation: (formData.get("designation") as string) || null,
     email: (formData.get("email") as string) || null,
+    country: (formData.get("country") as string) || null,
+    password: (formData.get("password") as string) || null,
     bio: (formData.get("bio") as string) || null,
     avatar_url: (formData.get("avatar_url") as string) || null,
   };

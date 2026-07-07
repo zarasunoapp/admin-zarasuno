@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { uploadFileToStorage } from "./upload";
 
 export function FileUploader({
   bucket,
@@ -30,13 +31,7 @@ export function FileUploader({
     setBusy(true);
     setError("");
     try {
-      const fd = new FormData();
-      fd.append("bucket", bucket);
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      const stored = data.url ?? data.path;
+      const stored = await uploadFileToStorage(bucket, file);
       setValue(stored);
       onUploaded?.(stored);
     } catch (err: any) {
