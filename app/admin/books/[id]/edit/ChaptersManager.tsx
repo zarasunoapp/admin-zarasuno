@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil, Clock } from "lucide-react";
+import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil, Clock, FileText } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FileUploader } from "@/components/admin/FileUploader";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { uploadFileToStorage } from "@/components/admin/upload";
 import { ChapterAudio } from "./ChapterAudio";
 import {
-  createChapterAction,
+  createTextChapterAction,
   bulkCreateChaptersAction,
   updateChapterAction,
   renameChapterAction,
@@ -61,6 +62,8 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [editError, setEditError] = useState("");
+  const [addingText, setAddingText] = useState(false);
+  const [textError, setTextError] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -157,14 +160,15 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
     });
   }
 
-  function addEmpty() {
-    const fd = new FormData();
-    fd.set("chapter_number", String(items.length + 1));
-    fd.set("title", `Chapter ${items.length + 1}`);
-    fd.set("is_preview", "false");
+  function saveTextChapter(formData: FormData) {
+    setTextError("");
     startTransition(async () => {
-      await createChapterAction(bookId, fd);
-      router.refresh();
+      const res = await createTextChapterAction(bookId, formData);
+      if (res && res.error) setTextError(res.error);
+      else {
+        setAddingText(false);
+        router.refresh();
+      }
     });
   }
 
@@ -235,8 +239,8 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
             <Clock className="h-3.5 w-3.5" />
             {items.length + staged.length} chapters · {totalLength(totalSeconds)}
           </span>
-          <button className="btn-ghost" onClick={addEmpty} disabled={pending}>
-            <Plus className="h-4 w-4" /> Empty Chapter
+          <button className="btn-ghost" onClick={() => { setTextError(""); setAddingText(true); }} disabled={pending}>
+            <FileText className="h-4 w-4" /> Add Text Chapter
           </button>
           <button className="btn-primary" onClick={() => fileRef.current?.click()}>
             <Upload className="h-4 w-4" /> Import Audio Files
@@ -355,8 +359,18 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
                   </div>
                 )}
                 <div className="mt-1 flex items-center gap-2">
-                  <ChapterAudio audioPath={c.audio_path} />
-                  <span className="text-xs text-muted">{mmss(c.duration_seconds || 0)}</span>
+                  {c.audio_path ? (
+                    <>
+                      <ChapterAudio audioPath={c.audio_path} />
+                      <span className="text-xs text-muted">{mmss(c.duration_seconds || 0)}</span>
+                    </>
+                  ) : c.content ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700">
+                      <FileText className="h-3.5 w-3.5" /> Text chapter
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted">No audio</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -402,6 +416,10 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
               <label className="label">Replace Audio (optional)</label>
               <FileUploader bucket="book-audio" name="audio_path" accept="audio/*" defaultValue={editing.audio_path || ""} label="Replace Audio" />
             </div>
+            <div>
+              <label className="label">Text Content (optional — for text chapters)</label>
+              <RichTextEditor name="content" defaultValue={editing.content || ""} />
+            </div>
             {editError && <p className="text-sm text-red-500">{editError}</p>}
             <div className="flex justify-end gap-3">
               <button type="button" className="btn-ghost" onClick={() => setEditing(null)}>
@@ -413,6 +431,35 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
             </div>
           </form>
         )}
+      </Modal>
+
+      <Modal open={addingText} onClose={() => setAddingText(false)} title="Add Text Chapter" wide>
+        <form action={saveTextChapter} className="space-y-4">
+          <div>
+            <label className="label">Chapter Name</label>
+            <input name="title" required placeholder="e.g. Introduction" className="input" />
+          </div>
+          <div>
+            <label className="label">Preview (free to read)</label>
+            <select name="is_preview" defaultValue="false" className="input">
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">Chapter Text</label>
+            <RichTextEditor name="content" defaultValue="" />
+          </div>
+          {textError && <p className="text-sm text-red-500">{textError}</p>}
+          <div className="flex justify-end gap-3">
+            <button type="button" className="btn-ghost" onClick={() => setAddingText(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn-primary" disabled={pending}>
+              {pending ? "Saving..." : "Save Text Chapter"}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

@@ -16,6 +16,7 @@ export async function createChapter(values: {
   audio_path?: string | null;
   duration_seconds?: number | null;
   is_preview?: boolean;
+  content?: string | null;
 }) {
   const db = createSupabaseAdminClient();
   const { data: last } = await db

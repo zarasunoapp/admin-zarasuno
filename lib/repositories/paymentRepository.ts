@@ -23,43 +23,6 @@ export async function listManualPayments(params: ListParams): Promise<ListResult
   return { rows: data ?? [], count: count ?? 0, page, perPage };
 }
 
-export async function createManualPayment(input: {
-  userIdentifier: string;
-  packageId: string;
-  provider: string;
-  reference?: string | null;
-  proofUrl?: string | null;
-}) {
-  const db = createSupabaseAdminClient();
-
-  const ident = input.userIdentifier.trim();
-  const isUuid = /^[0-9a-fA-F-]{36}$/.test(ident);
-  let userQuery = db.from("profiles").select("id").limit(1);
-  userQuery = isUuid ? userQuery.eq("id", ident) : userQuery.or(`email.eq.${ident},customer_number.eq.${ident}`);
-  const { data: user } = await userQuery.maybeSingle();
-  if (!user) throw new Error("User not found (use exact email, customer number, or ID)");
-
-  const { data: pkg } = await db
-    .from("coin_packages")
-    .select("coin_amount,price")
-    .eq("id", input.packageId)
-    .single();
-  if (!pkg) throw new Error("Package not found");
-
-  const { error } = await db.from("transactions").insert({
-    user_id: user.id,
-    type: "purchase",
-    payment_status: "pending",
-    payment_provider: input.provider,
-    package_id: input.packageId,
-    amount: pkg.price,
-    coin_change: pkg.coin_amount,
-    payment_reference: input.reference || null,
-    payment_proof_url: input.proofUrl || null,
-  });
-  if (error) throw new Error(error.message);
-}
-
 export async function approveManualPayment(transactionId: string) {
   const db = createSupabaseAdminClient();
   const { data: tx } = await db

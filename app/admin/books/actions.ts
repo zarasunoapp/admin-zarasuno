@@ -131,6 +131,23 @@ export async function createChapterAction(bookId: string, formData: FormData) {
   }
 }
 
+export async function createTextChapterAction(bookId: string, formData: FormData) {
+  await requireAdmin();
+  try {
+    await createChapter({
+      book_id: bookId,
+      chapter_number: 1,
+      title: String(formData.get("title") || "Untitled"),
+      audio_path: "",
+      is_preview: formData.get("is_preview") === "true",
+      content: String(formData.get("content") || ""),
+    });
+    revalidatePath(`/admin/books/${bookId}/edit`);
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
 export async function bulkCreateChaptersAction(
   bookId: string,
   rows: { title: string; audio_path?: string | null; duration_seconds?: number | null; is_preview?: boolean }[]
@@ -151,6 +168,7 @@ export async function updateChapterAction(id: string, bookId: string, formData: 
       title: String(formData.get("title")),
       audio_path: (formData.get("audio_path") as string) || "",
       is_preview: formData.get("is_preview") === "true",
+      content: String(formData.get("content") || ""),
     });
     revalidatePath(`/admin/books/${bookId}/edit`);
   } catch (e: any) {

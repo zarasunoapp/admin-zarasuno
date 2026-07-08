@@ -40,7 +40,7 @@ export default async function UsersPage({
     { key: "email", label: "Email", render: (r) => r.email || "—" },
     {
       key: "subscription",
-      label: "Coins",
+      label: "Subscription",
       render: (r) =>
         r.coin_balance != null ? (
           <span className="font-medium text-brand">{formatNumber(r.coin_balance)} coins</span>

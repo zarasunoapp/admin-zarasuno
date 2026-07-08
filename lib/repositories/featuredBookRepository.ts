@@ -1,32 +1,32 @@
 import "server-only";
-import { getSetting, saveSetting } from "./settingsRepository";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-const KEY = "featured_books";
+const TABLE = "featured_books";
 
 export async function listFeaturedBooks() {
-  const value = await getSetting(KEY);
-  return Array.isArray(value) ? value : [];
+  const db = createSupabaseAdminClient();
+  const { data } = await db
+    .from(TABLE)
+    .select("*, books:book_id(title,cover_url)")
+    .order("sort_order");
+  return data ?? [];
 }
 
-export async function createFeaturedBook(item: Record<string, unknown>) {
-  const list = await listFeaturedBooks();
-  const record = { ...item, id: crypto.randomUUID() };
-  await saveSetting(KEY, [...list, record]);
-  return record;
+export async function createFeaturedBook(values: Record<string, unknown>) {
+  const db = createSupabaseAdminClient();
+  const { data, error } = await db.from(TABLE).insert(values).select().single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function updateFeaturedBook(id: string, patch: Record<string, unknown>) {
-  const list = await listFeaturedBooks();
-  await saveSetting(
-    KEY,
-    list.map((f: any) => (f.id === id ? { ...f, ...patch } : f))
-  );
+export async function updateFeaturedBook(id: string, values: Record<string, unknown>) {
+  const db = createSupabaseAdminClient();
+  const { error } = await db.from(TABLE).update(values).eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteFeaturedBook(id: string) {
-  const list = await listFeaturedBooks();
-  await saveSetting(
-    KEY,
-    list.filter((f: any) => f.id !== id)
-  );
+  const db = createSupabaseAdminClient();
+  const { error } = await db.from(TABLE).delete().eq("id", id);
+  if (error) throw new Error(error.message);
 }

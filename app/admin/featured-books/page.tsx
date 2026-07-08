@@ -18,28 +18,20 @@ export default async function FeaturedBooksPage() {
   const bookOptions = books.map((b: any) => ({ value: b.id, label: b.title }));
 
   const fields = [
+    { name: "image_url", label: "Featured Image", type: "file" as const, bucket: "book-covers", required: true },
     { name: "book_id", label: "Linked Book (optional)", type: "select" as const, options: bookOptions },
-    { name: "title", label: "Title / Caption" },
-    { name: "image_url", label: "Featured Image", type: "file" as const, bucket: "book-covers" },
+    { name: "title", label: "Title / Caption (optional)" },
     { name: "sort_order", label: "Sort Order", type: "number" as const },
     { name: "is_active", label: "Active (show on website)", type: "toggle" as const },
   ];
-
-  const bookTitle = (id: string) => books.find((b: any) => b.id === id)?.title;
 
   return (
     <div>
       <PageHeader
         title="Featured Books"
-        subtitle="Upload images for the featured books section on the website"
+        subtitle="Upload the images shown in the website's Featured Books section"
         action={
-          <EntityForm
-            title="Add Featured Book"
-            fields={fields}
-            defaults={{ is_active: true }}
-            action={createFeaturedBookAction}
-            wide
-          />
+          <EntityForm title="Add Featured Book" fields={fields} defaults={{ is_active: true }} action={createFeaturedBookAction} wide />
         }
       />
 
@@ -48,44 +40,42 @@ export default async function FeaturedBooksPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-50 text-gold-600">
             <Star className="h-7 w-7" />
           </div>
-          <p className="text-muted">No featured books yet. Add one and upload its image.</p>
+          <p className="text-muted">No featured books yet. Upload an image to get started.</p>
           <EntityForm title="Add Featured Book" fields={fields} defaults={{ is_active: true }} action={createFeaturedBookAction} wide />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[...featured]
-            .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
-            .map((f: any) => (
-              <div key={f.id} className="card overflow-hidden">
-                <div className="aspect-[3/4] w-full bg-ivory">
-                  {f.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted">No image</div>
-                  )}
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {featured.map((f: any) => (
+            <div key={f.id} className="card overflow-hidden">
+              <div className="aspect-[3/4] w-full bg-ivory">
+                {f.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={f.image_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs text-muted">No image</div>
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2 p-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-ink">
+                    {f.title || f.books?.title || `#${f.sort_order}`}
+                  </div>
+                  <StatusBadge status={f.is_active ? "active" : "inactive"} />
                 </div>
-                <div className="flex items-center justify-between gap-2 p-3">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-ink">
-                      {f.title || bookTitle(f.book_id) || "Untitled"}
-                    </div>
-                    <StatusBadge status={f.is_active ? "active" : "inactive"} />
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-1">
-                    <EntityForm
-                      title="Edit Featured Book"
-                      fields={fields}
-                      defaults={f}
-                      action={updateFeaturedBookAction.bind(null, f.id)}
-                      trigger={<EditTrigger />}
-                      wide
-                    />
-                    <ConfirmDialog onConfirm={deleteFeaturedBookAction.bind(null, f.id)} />
-                  </div>
+                <div className="flex flex-shrink-0 items-center gap-1">
+                  <EntityForm
+                    title="Edit Featured Book"
+                    fields={fields}
+                    defaults={f}
+                    action={updateFeaturedBookAction.bind(null, f.id)}
+                    trigger={<EditTrigger />}
+                    wide
+                  />
+                  <ConfirmDialog onConfirm={deleteFeaturedBookAction.bind(null, f.id)} />
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       )}
     </div>

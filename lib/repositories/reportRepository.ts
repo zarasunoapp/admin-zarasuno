@@ -18,13 +18,6 @@ export async function getConsumptionReport(params: ListParams) {
   query = applyDateRange(query, params, "last_listened_at");
   const { data } = await query.limit(50000);
 
-  // Purchase counts per book (how many times a book was unlocked/purchased)
-  const { data: unlocks } = await db.from("book_unlocks").select("book_id");
-  const purchaseCounts: Record<string, number> = {};
-  (unlocks ?? []).forEach((u: any) => {
-    purchaseCounts[u.book_id] = (purchaseCounts[u.book_id] || 0) + 1;
-  });
-
   const groups: Record<string, any> = {};
   (data ?? []).forEach((r: any) => {
     const book = r.books;
@@ -33,14 +26,15 @@ export async function getConsumptionReport(params: ListParams) {
     const key = book.id;
     if (!groups[key]) {
       groups[key] = {
-        book_id: book.id,
         book_type: book.book_type,
         publisher_name: book.publishers?.name || "-",
         book_name: book.title,
+        users: new Set<string>(),
         total_seconds: 0,
         finished: 0,
       };
     }
+    groups[key].users.add(r.user_id);
     groups[key].total_seconds += r.position_seconds || 0;
     if (r.is_completed) groups[key].finished += 1;
   });
@@ -50,9 +44,10 @@ export async function getConsumptionReport(params: ListParams) {
       book_type: g.book_type,
       publisher_name: g.publisher_name,
       book_name: g.book_name,
+      number_of_users: g.users.size,
       total_minutes: Math.round(g.total_seconds / 60),
       finish_clicked: g.finished,
-      number_of_purchases: purchaseCounts[g.book_id] || 0,
+      consumption_share: Math.round(g.total_seconds / 60),
     }))
     .sort((a, b) => b.total_minutes - a.total_minutes);
 }

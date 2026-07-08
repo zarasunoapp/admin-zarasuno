@@ -13,7 +13,7 @@ const PATH = "/admin/featured-books";
 function parse(formData: FormData) {
   return {
     book_id: (formData.get("book_id") as string) || null,
-    title: String(formData.get("title") || ""),
+    title: (formData.get("title") as string) || null,
     image_url: String(formData.get("image_url") || ""),
     sort_order: Number(formData.get("sort_order") || 0),
     is_active: formData.get("is_active") === "true",
@@ -23,7 +23,9 @@ function parse(formData: FormData) {
 export async function createFeaturedBookAction(formData: FormData) {
   await requireAdmin();
   try {
-    await createFeaturedBook(parse(formData));
+    const values = parse(formData);
+    if (!values.image_url) return { error: "Please upload an image" };
+    await createFeaturedBook(values);
     revalidatePath(PATH);
   } catch (e: any) {
     return { error: e.message };
