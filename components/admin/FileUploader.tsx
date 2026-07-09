@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { uploadFileToStorage } from "./upload";
+import { uploadAudio } from "./resumableUpload";
 
 export function FileUploader({
   bucket,
@@ -10,6 +11,7 @@ export function FileUploader({
   defaultValue = "",
   accept,
   label = "Upload File",
+  resumable,
   onUploaded,
 }: {
   bucket: string;
@@ -17,10 +19,12 @@ export function FileUploader({
   defaultValue?: string;
   accept?: string;
   label?: string;
+  resumable?: boolean;
   onUploaded?: (value: string) => void;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
 
   const isImage = /\.(png|jpe?g|gif|webp|svg|avif)(\?|$)/i.test(value) || value.startsWith("data:image");
@@ -29,9 +33,12 @@ export function FileUploader({
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
+    setProgress(0);
     setError("");
     try {
-      const stored = await uploadFileToStorage(bucket, file);
+      const stored = resumable
+        ? await uploadAudio(file, setProgress)
+        : await uploadFileToStorage(bucket, file);
       setValue(stored);
       onUploaded?.(stored);
     } catch (err: any) {
@@ -51,9 +58,20 @@ export function FileUploader({
         ) : (
           <Upload className="h-5 w-5" />
         )}
-        {busy ? "Uploading..." : value ? "Uploaded — replace?" : label}
+        {busy
+          ? resumable
+            ? `Uploading... ${progress}%`
+            : "Uploading..."
+          : value
+          ? "Uploaded — replace?"
+          : label}
         <input type="file" accept={accept} className="hidden" onChange={handle} />
       </label>
+      {busy && resumable && (
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ivory">
+          <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+        </div>
+      )}
       <input type="hidden" name={name} value={value} />
       {value && !busy && isImage && (
         <div className="mt-2 flex items-center gap-3">

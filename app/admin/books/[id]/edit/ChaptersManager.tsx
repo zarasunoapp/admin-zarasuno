@@ -6,7 +6,7 @@ import { Upload, GripVertical, Trash2, Loader2, CheckCircle2, X, Plus, Pencil, C
 import { Modal } from "@/components/ui/Modal";
 import { FileUploader } from "@/components/admin/FileUploader";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
-import { uploadFileToStorage } from "@/components/admin/upload";
+import { uploadAudio } from "@/components/admin/resumableUpload";
 import { ChapterAudio } from "./ChapterAudio";
 import {
   createTextChapterAction,
@@ -24,6 +24,7 @@ type Staged = {
   isPreview: boolean;
   audioPath: string | null;
   status: "uploading" | "done" | "error";
+  progress: number;
   error?: string;
 };
 
@@ -111,6 +112,7 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
       isPreview: false,
       audioPath: null,
       status: "uploading",
+      progress: 0,
     }));
     setStaged((prev) => [...prev, ...newItems]);
     if (fileRef.current) fileRef.current.value = "";
@@ -121,9 +123,11 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
         const duration = await detectDuration(file);
         setStaged((prev) => prev.map((s) => (s.key === key ? { ...s, duration } : s)));
         try {
-          const stored = await uploadFileToStorage("book-audio", file);
+          const stored = await uploadAudio(file, (pct) =>
+            setStaged((prev) => prev.map((s) => (s.key === key ? { ...s, progress: pct } : s)))
+          );
           setStaged((prev) =>
-            prev.map((s) => (s.key === key ? { ...s, audioPath: stored, status: "done" } : s))
+            prev.map((s) => (s.key === key ? { ...s, audioPath: stored, status: "done", progress: 100 } : s))
           );
         } catch (err: any) {
           setStaged((prev) =>
@@ -288,8 +292,13 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
                   />
                   Preview
                 </label>
-                <span className="w-6 text-center">
-                  {s.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-muted" />}
+                <span className="flex w-14 items-center justify-center gap-1 text-center">
+                  {s.status === "uploading" && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-muted">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {s.progress}%
+                    </span>
+                  )}
                   {s.status === "done" && <CheckCircle2 className="h-4 w-4 text-brand" />}
                   {s.status === "error" && (
                     <span title={s.error}>
@@ -414,7 +423,7 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
             </div>
             <div>
               <label className="label">Replace Audio (optional)</label>
-              <FileUploader bucket="book-audio" name="audio_path" accept="audio/*" defaultValue={editing.audio_path || ""} label="Replace Audio" />
+              <FileUploader bucket="book-audio" name="audio_path" accept="audio/*" defaultValue={editing.audio_path || ""} label="Replace Audio" resumable />
             </div>
             <div>
               <label className="label">Text Content (optional — for text chapters)</label>
