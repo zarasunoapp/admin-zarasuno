@@ -74,16 +74,15 @@ async function buildTable(report: string, params: ListParams): Promise<ExportTab
       const rows = await getConsumptionReport(params);
       return {
         title: "Consumption Report",
-        headers: ["#", "Book Type", "Publisher", "Book", "Users", "Total Time (min)", "Finish Clicked", "Consumption Share"],
+        headers: ["#", "Book Type", "Publisher", "Book", "Total Time (min)", "Finish Clicked", "Number of Purchases"],
         rows: rows.map((r, i) => [
           i + 1,
           r.book_type,
           r.publisher_name,
           r.book_name,
-          r.number_of_users,
           r.total_minutes,
           r.finish_clicked,
-          r.consumption_share,
+          r.number_of_purchases,
         ]),
       };
     }

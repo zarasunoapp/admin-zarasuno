@@ -45,7 +45,7 @@ export function Sidebar({
         isCollapsed ? "w-[76px]" : "w-64"
       )}
     >
-      <div className="flex h-16 flex-shrink-0 items-center px-4">
+      <div className="flex h-20 flex-shrink-0 items-center px-3">
         {isCollapsed ? (
           <button
             onClick={onToggleCollapse}
@@ -55,19 +55,15 @@ export function Sidebar({
             <PanelLeftOpen className="h-5 w-5" />
           </button>
         ) : (
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-grad-gold font-display text-lg font-black text-brand-900">
-                Z
-              </div>
-              <span className="font-display text-xl font-bold">ZaraSuno</span>
-            </div>
+          <div className="flex w-full items-center justify-between gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/goldenlogo.png" alt="ZaraSuno" className="h-11 w-auto max-w-[72%] flex-shrink object-contain" />
             {mobile ? (
-              <button onClick={onClose} className="rounded-lg p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white">
+              <button onClick={onClose} className="flex-shrink-0 rounded-lg p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white">
                 <X className="h-5 w-5" />
               </button>
             ) : (
-              <button onClick={onToggleCollapse} title="Collapse sidebar" className="rounded-lg p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white">
+              <button onClick={onToggleCollapse} title="Collapse sidebar" className="mr-1 flex-shrink-0 rounded-lg p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white">
                 <PanelLeftClose className="h-5 w-5" />
               </button>
             )}
@@ -75,7 +71,7 @@ export function Sidebar({
         )}
       </div>
 
-      <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+      <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-3">
         {NAV.map((entry) =>
           isGroup(entry) ? (
             <NavGroupItem

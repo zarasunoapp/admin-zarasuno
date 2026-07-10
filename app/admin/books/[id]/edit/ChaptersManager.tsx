@@ -67,8 +67,26 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
   const [textError, setTextError] = useState("");
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [stagedDrag, setStagedDrag] = useState<number | null>(null);
+  const [stagedOver, setStagedOver] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const dragY = useRef(0);
+
+  function onStagedDrop(index: number) {
+    if (stagedDrag === null || stagedDrag === index) {
+      setStagedDrag(null);
+      setStagedOver(null);
+      return;
+    }
+    setStaged((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(stagedDrag, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setStagedDrag(null);
+    setStagedOver(null);
+  }
 
   useEffect(() => {
     setItems(chapters);
@@ -275,7 +293,26 @@ export function ChaptersManager({ bookId, chapters }: { bookId: string; chapters
           </div>
           <div className="space-y-2">
             {staged.map((s, i) => (
-              <div key={s.key} className="flex items-center gap-3 rounded-lg bg-white p-2.5 shadow-sm">
+              <div
+                key={s.key}
+                draggable
+                onDragStart={() => setStagedDrag(i)}
+                onDragEnd={() => {
+                  setStagedDrag(null);
+                  setStagedOver(null);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setStagedOver(i);
+                }}
+                onDrop={() => onStagedDrop(i)}
+                className={`flex items-center gap-3 rounded-lg bg-white p-2.5 shadow-sm transition ${
+                  stagedOver === i && stagedDrag !== null ? "ring-2 ring-brand/40" : ""
+                } ${stagedDrag === i ? "opacity-40" : ""}`}
+              >
+                <span title="Drag to reorder" className="cursor-grab text-muted active:cursor-grabbing">
+                  <GripVertical className="h-4 w-4" />
+                </span>
                 <span className="w-6 text-center text-xs font-semibold text-muted">{items.length + i + 1}</span>
                 <input
                   value={s.title}

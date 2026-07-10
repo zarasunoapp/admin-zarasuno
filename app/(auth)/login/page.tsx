@@ -1,4 +1,4 @@
-import { Headphones, Sparkles, ShieldCheck } from "lucide-react";
+import { Sparkles, ShieldCheck } from "lucide-react";
 import { LoginForm } from "./LoginForm";
 
 export default function LoginPage({
@@ -24,11 +24,9 @@ export default function LoginPage({
         <div className="absolute -right-16 bottom-10 h-80 w-80 rounded-full bg-brand-400/20 blur-3xl" />
 
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-grad-gold text-brand-900">
-              <Headphones className="h-6 w-6" />
-            </div>
-            <span className="font-display text-2xl font-bold">ZaraSuno</span>
+          <div className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/goldenlogo.png" alt="ZaraSuno" className="h-16 w-auto object-contain" />
           </div>
 
           <div>
@@ -52,11 +50,9 @@ export default function LoginPage({
       {/* Right form panel */}
       <div className="flex w-full items-center justify-center p-6 lg:w-1/2">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-grad-gold text-brand-900">
-              <Headphones className="h-6 w-6" />
-            </div>
-            <span className="font-display text-2xl font-bold text-ink">ZaraSuno</span>
+          <div className="mb-8 flex items-center lg:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/goldenlogo.png" alt="ZaraSuno" className="h-14 w-auto object-contain" />
           </div>
 
           <h2 className="font-display text-3xl font-bold text-ink">Welcome back</h2>

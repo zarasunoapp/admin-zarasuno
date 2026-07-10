@@ -60,7 +60,6 @@ export const NAV: NavEntry[] = [
       { label: "Consumption", href: "/admin/reports/consumption" },
       { label: "Statistics", href: "/admin/reports/statistics" },
       { label: "Purchase", href: "/admin/reports/purchase" },
-      { label: "Coin Purchase", href: "/admin/reports/coin-purchase" },
       { label: "Promocode", href: "/admin/reports/promocode" },
       { label: "Top Selling", href: "/admin/reports/top-selling" },
       { label: "Language", href: "/admin/reports/language" },

@@ -21,7 +21,7 @@ export default async function ConsumptionReport({
 }) {
   const params = parsePageParams(searchParams);
   const rows = await getConsumptionReport(params);
-  const chartData = rows.slice(0, 8).map((r) => ({ name: r.book_name, value: r.total_minutes }));
+  const chartData = rows.slice(0, 8).map((r) => ({ name: r.book_name, value: r.number_of_purchases }));
 
   return (
     <div>
@@ -30,7 +30,7 @@ export default async function ConsumptionReport({
         <SelectFilter paramKey="type" label="Book Type" options={bookTypes} />
         <DateRangeFilter />
       </div>
-      <ChartCard title="Top Books by Minutes Consumed" className="mb-6">
+      <ChartCard title="Top Books by Purchases" className="mb-6">
         <BarCompare data={chartData} xKey="name" yKey="value" />
       </ChartCard>
       <div className="card overflow-x-auto">
@@ -41,10 +41,9 @@ export default async function ConsumptionReport({
               <th className="px-5 py-3">Book Type</th>
               <th className="px-5 py-3">Publisher</th>
               <th className="px-5 py-3">Book Name</th>
-              <th className="px-5 py-3">Number of Users</th>
               <th className="px-5 py-3">Total Time (min)</th>
               <th className="px-5 py-3">Finish Clicked</th>
-              <th className="px-5 py-3">Consumption Share</th>
+              <th className="px-5 py-3">Number of Purchases</th>
             </tr>
           </thead>
           <tbody>
@@ -54,15 +53,14 @@ export default async function ConsumptionReport({
                 <td className="px-5 py-3 capitalize">{r.book_type}</td>
                 <td className="px-5 py-3">{r.publisher_name}</td>
                 <td className="px-5 py-3 font-medium">{r.book_name}</td>
-                <td className="px-5 py-3">{r.number_of_users}</td>
                 <td className="px-5 py-3">{r.total_minutes}</td>
                 <td className="px-5 py-3">{r.finish_clicked}</td>
-                <td className="px-5 py-3">{r.consumption_share}</td>
+                <td className="px-5 py-3 font-semibold text-brand">{r.number_of_purchases}</td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-muted">
+                <td colSpan={7} className="px-5 py-10 text-center text-muted">
                   No data for selected filters.
                 </td>
               </tr>

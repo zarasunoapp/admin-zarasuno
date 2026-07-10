@@ -9,7 +9,6 @@ const PATH = "/admin/authors";
 function parse(formData: FormData) {
   return {
     name: String(formData.get("name")),
-    designation: (formData.get("designation") as string) || null,
     email: (formData.get("email") as string) || null,
     country: (formData.get("country") as string) || null,
     password: (formData.get("password") as string) || null,

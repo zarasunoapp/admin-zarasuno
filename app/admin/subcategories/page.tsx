@@ -30,7 +30,6 @@ export default async function SubcategoriesPage({
   const fields = [
     { name: "name", label: "Subcategory Name", required: true },
     { name: "category_id", label: "Category", type: "select" as const, options: catOptions, required: true },
-    { name: "slug", label: "Slug (auto)" },
     { name: "sort_order", label: "Sort Order", type: "number" as const },
   ];
 

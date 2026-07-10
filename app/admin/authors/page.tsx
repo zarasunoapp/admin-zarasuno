@@ -11,7 +11,6 @@ export const dynamic = "force-dynamic";
 
 const fields = [
   { name: "name", label: "Author Name", required: true },
-  { name: "designation", label: "Designation" },
   { name: "email", label: "Email", type: "email" as const },
   { name: "country", label: "Author Country" },
   { name: "password", label: "Password", type: "password" as const },

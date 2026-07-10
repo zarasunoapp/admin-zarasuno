@@ -17,7 +17,6 @@ export const dynamic = "force-dynamic";
 
 const fields = [
   { name: "name", label: "Category Name", required: true },
-  { name: "slug", label: "Slug (auto)", placeholder: "leave blank to auto-generate" },
   { name: "icon_url", label: "Icon", type: "file" as const, bucket: "category-icons" },
   { name: "sort_order", label: "Sort Order", type: "number" as const },
   { name: "is_active", label: "Active", type: "toggle" as const },

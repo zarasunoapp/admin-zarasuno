@@ -10,33 +10,45 @@ function applyDateRange(query: any, params: ListParams, column = "created_at") {
 
 export async function getConsumptionReport(params: ListParams) {
   const db = createSupabaseAdminClient();
-  let query = db
-    .from("listening_progress")
-    .select(
-      "user_id, position_seconds, is_completed, books:book_id(id,title,book_type, publishers:publisher_id(name))"
-    );
-  query = applyDateRange(query, params, "last_listened_at");
-  const { data } = await query.limit(50000);
+  const BOOK_SELECT = "books:book_id(id,title,book_type, publishers:publisher_id(name))";
 
   const groups: Record<string, any> = {};
-  (data ?? []).forEach((r: any) => {
-    const book = r.books;
-    if (!book) return;
-    if (params.type && book.book_type !== params.type) return;
-    const key = book.id;
-    if (!groups[key]) {
-      groups[key] = {
+  const ensure = (book: any) => {
+    if (params.type && book.book_type !== params.type) return null;
+    if (!groups[book.id]) {
+      groups[book.id] = {
+        book_id: book.id,
         book_type: book.book_type,
         publisher_name: book.publishers?.name || "-",
         book_name: book.title,
-        users: new Set<string>(),
         total_seconds: 0,
         finished: 0,
+        purchases: 0,
       };
     }
-    groups[key].users.add(r.user_id);
-    groups[key].total_seconds += r.position_seconds || 0;
-    if (r.is_completed) groups[key].finished += 1;
+    return groups[book.id];
+  };
+
+  // Purchases (book_unlocks) — includes books that were bought even if never listened
+  let unlockQuery = db.from("book_unlocks").select(`book_id, ${BOOK_SELECT}`);
+  unlockQuery = applyDateRange(unlockQuery, params, "created_at");
+  const { data: unlocks } = await unlockQuery.limit(50000);
+  (unlocks ?? []).forEach((u: any) => {
+    const g = u.books && ensure(u.books);
+    if (g) g.purchases += 1;
+  });
+
+  // Listening (time spent + finish clicked)
+  let lpQuery = db
+    .from("listening_progress")
+    .select(`position_seconds, is_completed, ${BOOK_SELECT}`);
+  lpQuery = applyDateRange(lpQuery, params, "last_listened_at");
+  const { data: lp } = await lpQuery.limit(50000);
+  (lp ?? []).forEach((r: any) => {
+    const g = r.books && ensure(r.books);
+    if (!g) return;
+    g.total_seconds += r.position_seconds || 0;
+    if (r.is_completed) g.finished += 1;
   });
 
   return Object.values(groups)
@@ -44,12 +56,12 @@ export async function getConsumptionReport(params: ListParams) {
       book_type: g.book_type,
       publisher_name: g.publisher_name,
       book_name: g.book_name,
-      number_of_users: g.users.size,
       total_minutes: Math.round(g.total_seconds / 60),
       finish_clicked: g.finished,
+      number_of_purchases: g.purchases,
       consumption_share: Math.round(g.total_seconds / 60),
     }))
-    .sort((a, b) => b.total_minutes - a.total_minutes);
+    .sort((a, b) => b.number_of_purchases - a.number_of_purchases || b.total_minutes - a.total_minutes);
 }
 
 export async function getStatisticsReport(params: ListParams) {
