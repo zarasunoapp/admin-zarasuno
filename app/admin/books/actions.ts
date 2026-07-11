@@ -40,6 +40,7 @@ function parseBook(formData: FormData) {
     author_3_id: formData.get("author_3_id") || null,
     author_4_id: formData.get("author_4_id") || null,
     decade_published: formData.get("decade_published") || null,
+    ebook_file: formData.get("ebook_file") || null,
     isbn10: formData.get("isbn10") || null,
     isbn13: formData.get("isbn13") || null,
     edition: formData.get("edition") || null,

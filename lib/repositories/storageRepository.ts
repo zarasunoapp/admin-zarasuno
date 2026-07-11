@@ -1,7 +1,7 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-const PRIVATE_BUCKETS = new Set(["book-audio"]);
+const PRIVATE_BUCKETS = new Set(["book-audio", "ebooks"]);
 
 export async function uploadFile(bucket: string, file: File, prefix = "") {
   const db = createSupabaseAdminClient();

@@ -182,6 +182,15 @@ export function BookForm({
         <Field label="Front Cover">
           <FileUploader bucket="book-covers" name="cover_url" defaultValue={defaults?.cover_url || ""} />
         </Field>
+        <Field label="eBook File (PDF / EPUB — for eBook type)" full>
+          <FileUploader
+            bucket="ebooks"
+            name="ebook_file"
+            accept=".pdf,.epub"
+            defaultValue={meta.ebook_file || ""}
+            label="Upload eBook File"
+          />
+        </Field>
       </Section>
 
       <div className="card overflow-hidden">
