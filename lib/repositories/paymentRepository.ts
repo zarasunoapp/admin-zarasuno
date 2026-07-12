@@ -1,6 +1,7 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { range, type ListParams, type ListResult } from "./types";
+import { sendCoinsEmail } from "@/lib/email";
 
 export async function listManualPayments(params: ListParams): Promise<ListResult<any>> {
   const db = createSupabaseAdminClient();
@@ -66,7 +67,7 @@ export async function approveManualPayment(transactionId: string) {
   const db = createSupabaseAdminClient();
   const { data: tx } = await db
     .from("transactions")
-    .select("*, coin_packages:package_id(coin_amount)")
+    .select("*, coin_packages:package_id(name,coin_amount)")
     .eq("id", transactionId)
     .single();
   if (!tx) throw new Error("Transaction not found");
@@ -74,17 +75,26 @@ export async function approveManualPayment(transactionId: string) {
   const coins = tx.coin_change || tx.coin_packages?.coin_amount || 0;
   const { data: profile } = await db
     .from("profiles")
-    .select("coin_balance")
+    .select("coin_balance,email,full_name")
     .eq("id", tx.user_id)
     .single();
   const current = profile?.coin_balance ?? 0;
+  const newBalance = current + coins;
 
-  await db.from("profiles").update({ coin_balance: current + coins }).eq("id", tx.user_id);
+  await db.from("profiles").update({ coin_balance: newBalance }).eq("id", tx.user_id);
   const { error } = await db
     .from("transactions")
     .update({ payment_status: "completed", coin_change: coins })
     .eq("id", transactionId);
   if (error) throw new Error(error.message);
+
+  await sendCoinsEmail({
+    to: profile?.email,
+    name: profile?.full_name,
+    coins,
+    balance: newBalance,
+    packageName: tx.coin_packages?.name,
+  });
 }
 
 export async function rejectManualPayment(transactionId: string) {

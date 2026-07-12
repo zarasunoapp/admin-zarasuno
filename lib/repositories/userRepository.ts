@@ -1,6 +1,7 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { range, type ListParams, type ListResult } from "./types";
+import { sendCoinsEmail } from "@/lib/email";
 
 const TABLE = "profiles";
 
@@ -50,11 +51,16 @@ export async function deleteUser(id: string) {
 
 export async function grantCoins(userId: string, amount: number, note?: string) {
   const db = createSupabaseAdminClient();
-  const { data: profile } = await db.from(TABLE).select("coin_balance").eq("id", userId).single();
+  const { data: profile } = await db
+    .from(TABLE)
+    .select("coin_balance,email,full_name")
+    .eq("id", userId)
+    .single();
   const current = profile?.coin_balance ?? 0;
+  const newBalance = current + amount;
   const { error: balError } = await db
     .from(TABLE)
-    .update({ coin_balance: current + amount })
+    .update({ coin_balance: newBalance })
     .eq("id", userId);
   if (balError) throw new Error(balError.message);
 
@@ -67,6 +73,14 @@ export async function grantCoins(userId: string, amount: number, note?: string) 
     payment_reference: note ?? null,
   });
   if (txError) throw new Error(txError.message);
+
+  await sendCoinsEmail({
+    to: profile?.email,
+    name: profile?.full_name,
+    coins: amount,
+    balance: newBalance,
+    packageName: note || "Admin credit",
+  });
 }
 
 export async function grantBookAccess(userId: string, bookId: string) {
