@@ -19,7 +19,14 @@ const sora = Sora({
 export const metadata: Metadata = {
   title: "ZaraSuno Admin",
   description: "ZaraSuno audiobook platform admin panel",
-  icons: { icon: "/goldenlogo.png", apple: "/goldenlogo.png" },
+  icons: {
+    icon: [
+      { url: "/favicon.jpeg", type: "image/jpeg" },
+      { url: "/goldenlogo.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.jpeg",
+    apple: "/favicon.jpeg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
