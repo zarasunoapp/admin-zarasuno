@@ -26,15 +26,34 @@ export async function getDashboardStats() {
   };
 }
 
-// PKR per 1 AUD (configurable via env). Amounts stored in PKR are converted to AUD.
-const PKR_PER_AUD = Number(process.env.EXCHANGE_PKR_PER_AUD || 185);
-function toAud(amount: any, currency: any) {
-  const a = Number(amount || 0);
-  return String(currency || "").toUpperCase() === "PKR" ? a / PKR_PER_AUD : a;
+// Live PKR->AUD conversion using a free, keyless daily rate API (cached ~a day).
+let rateCache = { pkrPerAud: 0, at: 0 };
+async function getPkrPerAud(): Promise<number> {
+  const now = Date.now();
+  if (rateCache.pkrPerAud && now - rateCache.at < 6 * 3600 * 1000) return rateCache.pkrPerAud;
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/AUD", {
+      next: { revalidate: 86400 },
+    });
+    const json = await res.json();
+    const pkr = Number(json?.rates?.PKR);
+    if (pkr > 0) {
+      rateCache = { pkrPerAud: pkr, at: now };
+      return pkr;
+    }
+  } catch {
+    // ignore — fall back below
+  }
+  return rateCache.pkrPerAud || Number(process.env.EXCHANGE_PKR_PER_AUD || 185);
 }
 
 export async function getMonthlySales() {
   const db = createSupabaseAdminClient();
+  const pkrPerAud = await getPkrPerAud();
+  const toAud = (amount: any, currency: any) => {
+    const a = Number(amount || 0);
+    return String(currency || "").toUpperCase() === "PKR" ? a / pkrPerAud : a;
+  };
   const { data } = await db
     .from("transactions")
     .select("amount,currency,created_at")
