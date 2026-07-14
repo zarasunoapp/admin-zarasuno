@@ -40,8 +40,8 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="Sales Value (Monthly)">
-          <LineTrend data={monthlySales} xKey="month" yKey="value" />
+        <ChartCard title="Sales Value (Monthly · AUD)">
+          <LineTrend data={monthlySales} xKey="month" yKey="value" currency="AUD" />
         </ChartCard>
         <ChartCard title="New Users (Monthly)">
           <BarCompare data={newUsers} xKey="month" yKey="value" />

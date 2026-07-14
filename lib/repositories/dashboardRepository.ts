@@ -37,9 +37,18 @@ export async function getMonthlySales() {
   const buckets: Record<string, number> = {};
   (data ?? []).forEach((t: any) => {
     const key = monthKey(t.created_at);
-    buckets[key] = (buckets[key] || 0) + (t.amount || 0);
+    buckets[key] = (buckets[key] || 0) + Number(t.amount || 0);
   });
-  return Object.entries(buckets).map(([month, value]) => ({ month, value }));
+  return Object.entries(buckets)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => {
+      const [y, m] = key.split("-");
+      const label = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-AU", {
+        month: "short",
+        year: "2-digit",
+      });
+      return { month: label, value };
+    });
 }
 
 export async function getMonthlyNewUsers() {

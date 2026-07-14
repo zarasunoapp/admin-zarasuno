@@ -42,7 +42,7 @@ export function LoginForm({ notAuthorized }: { notAuthorized?: boolean }) {
       .eq("id", data.user.id)
       .single();
 
-    if (!profile || profile.role !== "admin") {
+    if (!profile || !["admin", "superadmin"].includes(profile.role)) {
       await supabase.auth.signOut();
       const msg = "Not authorized — this account is not an admin.";
       setError(msg);

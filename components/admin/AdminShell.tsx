@@ -7,9 +7,11 @@ import { Breadcrumbs } from "./Breadcrumbs";
 
 export function AdminShell({
   email,
+  role,
   children,
 }: {
   email?: string | null;
+  role?: string | null;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -30,7 +32,7 @@ export function AdminShell({
   return (
     <div className="flex min-h-screen bg-ivory">
       <div className="sticky top-0 hidden h-screen self-start lg:block">
-        <Sidebar email={email} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
+        <Sidebar email={email} role={role} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
       </div>
 
       <div className={`fixed inset-0 z-50 lg:hidden ${mobileOpen ? "visible" : "invisible"}`}>
@@ -45,7 +47,7 @@ export function AdminShell({
             mobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <Sidebar mobile email={email} onClose={() => setMobileOpen(false)} onNavigate={() => setMobileOpen(false)} />
+          <Sidebar mobile email={email} role={role} onClose={() => setMobileOpen(false)} onNavigate={() => setMobileOpen(false)} />
         </div>
       </div>
 

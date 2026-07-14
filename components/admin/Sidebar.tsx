@@ -16,6 +16,7 @@ export function Sidebar({
   collapsed = false,
   mobile = false,
   email,
+  role,
   onToggleCollapse,
   onClose,
   onNavigate,
@@ -23,11 +24,13 @@ export function Sidebar({
   collapsed?: boolean;
   mobile?: boolean;
   email?: string | null;
+  role?: string | null;
   onToggleCollapse?: () => void;
   onClose?: () => void;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
+  const visibleNav = NAV.filter((e: any) => !e.superadminOnly || role === "superadmin");
   const router = useRouter();
   const isCollapsed = collapsed && !mobile;
 
@@ -72,7 +75,7 @@ export function Sidebar({
       </div>
 
       <nav className="no-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-4 pt-3">
-        {NAV.map((entry) =>
+        {visibleNav.map((entry) =>
           isGroup(entry) ? (
             <NavGroupItem
               key={entry.label}

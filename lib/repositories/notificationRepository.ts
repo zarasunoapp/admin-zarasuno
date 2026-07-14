@@ -38,3 +38,20 @@ export async function deleteNotification(id: string) {
   const { error } = await db.from(TABLE).delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+// Broadcast a system notification to everyone (real-time on the website via Supabase Realtime).
+export async function notifyBroadcast(title: string, body?: string | null, imageUrl?: string | null) {
+  try {
+    const db = createSupabaseAdminClient();
+    await db.from(TABLE).insert({
+      title,
+      body: body ?? null,
+      user_id: null,
+      audience: "all",
+      show_in_popup: false,
+      image_url: imageUrl ?? null,
+    });
+  } catch (e) {
+    console.error("notifyBroadcast failed:", e);
+  }
+}

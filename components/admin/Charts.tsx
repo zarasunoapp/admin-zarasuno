@@ -50,18 +50,28 @@ export function LineTrend({
   data,
   xKey,
   yKey,
+  currency,
 }: {
   data: any[];
   xKey: string;
   yKey: string;
+  currency?: string;
 }) {
+  const fmt = currency
+    ? (v: any) => `$${Number(v || 0).toLocaleString("en-AU")}`
+    : (v: any) => Number(v || 0).toLocaleString("en-AU");
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 5, right: 12, left: 4, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#eee" vertical={false} />
         <XAxis dataKey={xKey} tick={axisStyle} axisLine={false} tickLine={false} />
-        <YAxis tick={axisStyle} axisLine={false} tickLine={false} />
-        <Tooltip />
+        <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={64} tickFormatter={fmt} />
+        <Tooltip
+          formatter={(v: any) => [
+            currency ? `${fmt(v)} ${currency}` : fmt(v),
+            currency ? "Sales" : "Value",
+          ]}
+        />
         <Line
           type="monotone"
           dataKey={yKey}

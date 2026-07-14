@@ -21,7 +21,11 @@ export async function listSales(params: ListParams): Promise<ListResult<any>> {
   const perPage = params.perPage ?? 10;
   const { start, end } = range(page, perPage);
 
-  let query = db.from(TABLE).select(SELECT, { count: "exact" }).eq("type", "purchase");
+  let query = db
+    .from(TABLE)
+    .select(SELECT, { count: "exact" })
+    .eq("type", "purchase")
+    .eq("payment_status", "completed");
   query = applySalesFilters(query, params);
   query = query.order("created_at", { ascending: false }).range(start, end);
 
@@ -31,7 +35,7 @@ export async function listSales(params: ListParams): Promise<ListResult<any>> {
 
 export async function listAllSalesForExport(params: ListParams) {
   const db = createSupabaseAdminClient();
-  let query = db.from(TABLE).select(SELECT).eq("type", "purchase");
+  let query = db.from(TABLE).select(SELECT).eq("type", "purchase").eq("payment_status", "completed");
   query = applySalesFilters(query, params);
   const { data } = await query.order("created_at", { ascending: false }).limit(10000);
   return data ?? [];

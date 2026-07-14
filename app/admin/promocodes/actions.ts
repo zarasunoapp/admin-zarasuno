@@ -7,6 +7,7 @@ import {
   updatePromocode,
   deletePromocode,
 } from "@/lib/repositories/promocodeRepository";
+import { notifyBroadcast } from "@/lib/repositories/notificationRepository";
 
 const PATH = "/admin/promocodes";
 
@@ -31,7 +32,21 @@ function parse(formData: FormData) {
 export async function createPromocodeAction(formData: FormData) {
   await requireAdmin();
   try {
-    await createPromocode(parse(formData));
+    const values = parse(formData);
+    await createPromocode(values);
+    if (values.is_active) {
+      if (values.reward_type === "discount") {
+        await notifyBroadcast(
+          `🎉 ${values.discount_percent}% OFF on coin packages!`,
+          `Use code ${values.code} at checkout and save on your next coin purchase.`
+        );
+      } else if (values.coin_reward > 0) {
+        await notifyBroadcast(
+          `🎁 Free ${values.coin_reward} coins!`,
+          `Redeem code ${values.code} to get ${values.coin_reward} free coins on ZaraSuno.`
+        );
+      }
+    }
     revalidatePath(PATH);
   } catch (e: any) {
     return { error: e.message };

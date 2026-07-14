@@ -5,6 +5,7 @@ import { ExportButtons } from "@/components/admin/ExportButtons";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parsePageParams, formatDateTime, formatMoney } from "@/lib/utils";
 import { listSales } from "@/lib/repositories/transactionRepository";
+import { bulkDeleteAction } from "../bulk-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,15 +28,14 @@ export default async function SalesPage({
     { key: "user", label: "Order BY", render: (r) => r.profiles?.full_name || r.profiles?.email || "—" },
     { key: "package", label: "Package Name", render: (r) => r.coin_packages?.name || "-" },
     { key: "package_type", label: "Package Type", render: () => "Coins" },
-    { key: "amount", label: "Total Amount", render: (r) => formatMoney(r.amount) },
+    { key: "amount", label: "Total Amount", render: (r) => formatMoney(r.amount, r.currency || "AUD") },
     { key: "provider", label: "Payment Type", render: (r) => <span className="capitalize">{r.payment_provider || "—"}</span> },
-    { key: "payment_status", label: "Payment Status", render: (r) => <StatusBadge status={r.payment_status} /> },
-    { key: "status", label: "Status", render: (r) => <StatusBadge status={r.payment_status === "completed" ? "completed" : r.payment_status} /> },
+    { key: "payment_status", label: "Status", render: (r) => <StatusBadge status={r.payment_status} /> },
   ];
 
   return (
     <div>
-      <PageHeader title="Sales" subtitle="Coin purchase transactions" action={<ExportButtons report="sales" />} />
+      <PageHeader title="Sales" subtitle="Completed coin purchases (Stripe / approved JazzCash / EasyPaisa)" action={<ExportButtons report="sales" />} />
       <DataTable
         columns={columns}
         rows={rows}
@@ -44,6 +44,8 @@ export default async function SalesPage({
         perPage={perPage}
         searchPlaceholder="Search by ID / provider..."
         toolbar={<DateRangeFilter />}
+        bulkDelete={bulkDeleteAction.bind(null, "transactions", "/admin/sales")}
+        bulkLabel="sales"
       />
     </div>
   );

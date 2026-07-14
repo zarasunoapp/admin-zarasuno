@@ -19,6 +19,7 @@ import {
   renameChapter,
 } from "@/lib/repositories/chapterRepository";
 import { signedAudioUrl } from "@/lib/repositories/storageRepository";
+import { notifyBroadcast } from "@/lib/repositories/notificationRepository";
 
 export async function getChapterAudioUrlAction(audioPath: string) {
   await requireAdmin();
@@ -78,6 +79,13 @@ function parseBook(formData: FormData) {
 export async function createBookAction(formData: FormData) {
   await requireAdmin();
   const book = await createBook(parseBook(formData));
+  if (book?.is_published) {
+    await notifyBroadcast(
+      `New book added: ${book.title}`,
+      book.subtitle || "A new title just landed on ZaraSuno — start listening now!",
+      book.cover_url
+    );
+  }
   revalidatePath(PATH);
   redirect(`/admin/books/${book.id}/edit`);
 }

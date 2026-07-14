@@ -11,6 +11,8 @@ export async function getSessionUser() {
   return user;
 }
 
+const ADMIN_ROLES = ["admin", "superadmin"];
+
 export async function getAdminProfile() {
   const user = await getSessionUser();
   if (!user) return null;
@@ -20,12 +22,18 @@ export async function getAdminProfile() {
     .select("*")
     .eq("id", user.id)
     .single();
-  if (!data || data.role !== "admin") return null;
+  if (!data || !ADMIN_ROLES.includes(data.role)) return null;
   return { ...data, email: user.email };
 }
 
 export async function requireAdmin() {
   const profile = await getAdminProfile();
   if (!profile) redirect("/login?error=not-authorized");
+  return profile;
+}
+
+export async function requireSuperAdmin() {
+  const profile = await getAdminProfile();
+  if (!profile || profile.role !== "superadmin") redirect("/admin");
   return profile;
 }

@@ -17,12 +17,14 @@ import {
   ShieldCheck,
   FileText,
   MessageSquare,
+  Quote,
   Settings,
   Wallet,
   BarChart3,
+  UserCog,
 } from "lucide-react";
 
-export type NavItem = { label: string; href: string; icon?: any };
+export type NavItem = { label: string; href: string; icon?: any; superadminOnly?: boolean };
 export type NavGroup = { label: string; icon?: any; items: NavItem[] };
 export type NavEntry = NavItem | NavGroup;
 
@@ -51,7 +53,9 @@ export const NAV: NavEntry[] = [
   { label: "Privacy Policy", href: "/admin/privacy", icon: ShieldCheck },
   { label: "Term Condition", href: "/admin/terms", icon: FileText },
   { label: "Feedback", href: "/admin/feedback", icon: MessageSquare },
+  { label: "Testimonials", href: "/admin/testimonials", icon: Quote },
   { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Admins", href: "/admin/admins", icon: UserCog, superadminOnly: true },
   { label: "Payments", href: "/admin/payments/manual", icon: Wallet },
   {
     label: "Reports",

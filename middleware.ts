@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
       .select("role")
       .eq("id", user.id)
       .single();
-    if (!profile || profile.role !== "admin") {
+    if (!profile || !["admin", "superadmin"].includes(profile.role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("error", "not-authorized");
