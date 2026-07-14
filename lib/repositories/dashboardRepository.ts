@@ -26,18 +26,25 @@ export async function getDashboardStats() {
   };
 }
 
+// PKR per 1 AUD (configurable via env). Amounts stored in PKR are converted to AUD.
+const PKR_PER_AUD = Number(process.env.EXCHANGE_PKR_PER_AUD || 185);
+function toAud(amount: any, currency: any) {
+  const a = Number(amount || 0);
+  return String(currency || "").toUpperCase() === "PKR" ? a / PKR_PER_AUD : a;
+}
+
 export async function getMonthlySales() {
   const db = createSupabaseAdminClient();
   const { data } = await db
     .from("transactions")
-    .select("amount,created_at")
+    .select("amount,currency,created_at")
     .eq("type", "purchase")
     .eq("payment_status", "completed")
     .order("created_at");
   const buckets: Record<string, number> = {};
   (data ?? []).forEach((t: any) => {
     const key = monthKey(t.created_at);
-    buckets[key] = (buckets[key] || 0) + Number(t.amount || 0);
+    buckets[key] = (buckets[key] || 0) + toAud(t.amount, t.currency);
   });
   return Object.entries(buckets)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -47,7 +54,7 @@ export async function getMonthlySales() {
         month: "short",
         year: "2-digit",
       });
-      return { month: label, value };
+      return { month: label, value: Math.round(value * 100) / 100 };
     });
 }
 
