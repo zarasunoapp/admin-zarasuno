@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FileUploader } from "./FileUploader";
 import { toast } from "@/lib/toast";
@@ -127,6 +127,9 @@ function FieldInput({ field, defaultValue }: { field: Field; defaultValue: any }
   if (field.type === "file") {
     return <FileUploader bucket={field.bucket || "uploads"} name={field.name} defaultValue={defaultValue ?? ""} />;
   }
+  if (field.type === "password") {
+    return <PasswordInput field={field} defaultValue={defaultValue} />;
+  }
   return (
     <input
       type={field.type || "text"}
@@ -136,6 +139,31 @@ function FieldInput({ field, defaultValue }: { field: Field; defaultValue: any }
       defaultValue={defaultValue ?? ""}
       className="input"
     />
+  );
+}
+
+function PasswordInput({ field, defaultValue }: { field: Field; defaultValue: any }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        name={field.name}
+        required={field.required}
+        placeholder={field.placeholder || "Password"}
+        defaultValue={defaultValue ?? ""}
+        className="input pr-10"
+        autoComplete="new-password"
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition hover:text-ink"
+        title={show ? "Hide" : "Show"}
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
   );
 }
 

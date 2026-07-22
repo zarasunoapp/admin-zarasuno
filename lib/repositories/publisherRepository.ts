@@ -69,16 +69,33 @@ export async function updatePublisher(
 ) {
   const db = createSupabaseAdminClient();
   const { data: existing } = await db.from(TABLE).select("user_id").eq("id", id).single();
+  let userId: string | null = existing?.user_id || null;
+  const email = values.email ? values.email.trim().toLowerCase() : null;
 
-  // Reset the portal login password if provided.
-  if (values.password && existing?.user_id) {
-    const { error } = await db.auth.admin.updateUserById(existing.user_id, { password: values.password });
-    if (error) throw new Error(error.message);
+  if (values.password) {
+    if (userId) {
+      // reset existing login password
+      const { error } = await db.auth.admin.updateUserById(userId, { password: values.password });
+      if (error) throw new Error(error.message);
+    } else if (email) {
+      // no login yet — create one now
+      const { data: authData, error: authErr } = await db.auth.admin.createUser({
+        email,
+        password: values.password,
+        email_confirm: true,
+      });
+      if (authErr) throw new Error(authErr.message);
+      userId = authData.user.id;
+      const { error: pErr } = await db
+        .from("profiles")
+        .upsert({ id: userId, email, full_name: values.name, role: "publisher" }, { onConflict: "id" });
+      if (pErr) throw new Error(pErr.message);
+    }
   }
 
   const { data, error } = await db
     .from(TABLE)
-    .update({ name: values.name, email: values.email || null, country: values.country || null })
+    .update({ name: values.name, email, country: values.country || null, user_id: userId })
     .eq("id", id)
     .select()
     .single();
