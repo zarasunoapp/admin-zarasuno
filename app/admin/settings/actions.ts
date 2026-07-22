@@ -18,6 +18,7 @@ export async function saveSettingsAction(formData: FormData) {
         facebook: String(formData.get("facebook") || ""),
         instagram: String(formData.get("instagram") || ""),
         twitter: String(formData.get("twitter") || ""),
+        tiktok: String(formData.get("tiktok") || ""),
       },
     });
     revalidatePath("/admin/settings");

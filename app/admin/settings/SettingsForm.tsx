@@ -69,6 +69,10 @@ export function SettingsForm({
         <label className="label">Twitter / X</label>
         <input name="twitter" defaultValue={socials.twitter} className="input" />
       </div>
+      <div>
+        <label className="label">TikTok</label>
+        <input name="tiktok" defaultValue={socials.tiktok} placeholder="https://tiktok.com/@zarasuno" className="input" />
+      </div>
       <div className="flex items-center gap-3 sm:col-span-2">
         <button type="submit" className="btn-primary" disabled={pending}>
           <Save className="h-4 w-4" />
