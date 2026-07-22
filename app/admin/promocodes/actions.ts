@@ -21,6 +21,7 @@ function parse(formData: FormData) {
     discount_percent:
       rewardType === "discount" ? Number(formData.get("discount_percent") || 0) : null,
     package_id: (formData.get("package_id") as string) || null,
+    influencer_id: (formData.get("influencer_id") as string) || null,
     starts_at: (formData.get("starts_at") as string) || null,
     expires_at: (formData.get("expires_at") as string) || null,
     max_uses: formData.get("max_uses") ? Number(formData.get("max_uses")) : null,

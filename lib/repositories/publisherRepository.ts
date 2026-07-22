@@ -31,7 +31,34 @@ export async function createPublisher(values: {
   password?: string | null;
 }) {
   const db = createSupabaseAdminClient();
-  const { data, error } = await db.from(TABLE).insert(values).select().single();
+  let userId: string | null = null;
+
+  // If email + password given, create a login account (role 'publisher') for the portal.
+  if (values.email && values.password) {
+    const email = values.email.trim().toLowerCase();
+    const { data: authData, error: authErr } = await db.auth.admin.createUser({
+      email,
+      password: values.password,
+      email_confirm: true,
+    });
+    if (authErr) throw new Error(authErr.message);
+    userId = authData.user.id;
+    const { error: pErr } = await db
+      .from("profiles")
+      .upsert({ id: userId, email, full_name: values.name, role: "publisher" }, { onConflict: "id" });
+    if (pErr) throw new Error(pErr.message);
+  }
+
+  const { data, error } = await db
+    .from(TABLE)
+    .insert({
+      name: values.name,
+      email: values.email ? values.email.trim().toLowerCase() : null,
+      country: values.country || null,
+      user_id: userId,
+    })
+    .select()
+    .single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -41,13 +68,28 @@ export async function updatePublisher(
   values: { name?: string; email?: string | null; country?: string | null; password?: string | null }
 ) {
   const db = createSupabaseAdminClient();
-  const { data, error } = await db.from(TABLE).update(values).eq("id", id).select().single();
+  const { data: existing } = await db.from(TABLE).select("user_id").eq("id", id).single();
+
+  // Reset the portal login password if provided.
+  if (values.password && existing?.user_id) {
+    const { error } = await db.auth.admin.updateUserById(existing.user_id, { password: values.password });
+    if (error) throw new Error(error.message);
+  }
+
+  const { data, error } = await db
+    .from(TABLE)
+    .update({ name: values.name, email: values.email || null, country: values.country || null })
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw new Error(error.message);
   return data;
 }
 
 export async function deletePublisher(id: string) {
   const db = createSupabaseAdminClient();
+  const { data: existing } = await db.from(TABLE).select("user_id").eq("id", id).single();
+  if (existing?.user_id) await db.auth.admin.deleteUser(existing.user_id).catch(() => null);
   const { error } = await db.from(TABLE).delete().eq("id", id);
   if (error) throw new Error(error.message);
 }

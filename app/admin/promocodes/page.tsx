@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { parsePageParams } from "@/lib/utils";
 import { listPromocodes } from "@/lib/repositories/promocodeRepository";
 import { listAllCoinPackages } from "@/lib/repositories/coinPackageRepository";
+import { listAllInfluencers } from "@/lib/repositories/influencerRepository";
 import {
   createPromocodeAction,
   updatePromocodeAction,
@@ -21,9 +22,10 @@ export default async function PromocodesPage({
   searchParams: Record<string, string>;
 }) {
   const params = parsePageParams(searchParams);
-  const [{ rows, count, page, perPage }, packages] = await Promise.all([
+  const [{ rows, count, page, perPage }, packages, influencers] = await Promise.all([
     listPromocodes(params),
     listAllCoinPackages(),
+    listAllInfluencers(),
   ]);
 
   const fields = [
@@ -46,6 +48,12 @@ export default async function PromocodesPage({
       label: "Apply to Package (blank = any package)",
       type: "select" as const,
       options: packages.map((p: any) => ({ value: p.id, label: p.name })),
+    },
+    {
+      name: "influencer_id",
+      label: "Assign to Influencer (optional)",
+      type: "select" as const,
+      options: influencers.map((inf: any) => ({ value: inf.id, label: inf.name })),
     },
     { name: "starts_at", label: "Start Date", type: "date" as const },
     { name: "expires_at", label: "End Date", type: "date" as const },

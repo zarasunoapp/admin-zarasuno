@@ -17,9 +17,9 @@ export const dynamic = "force-dynamic";
 
 const fields = [
   { name: "name", label: "Name", required: true },
-  { name: "email", label: "Email", type: "email" as const },
+  { name: "email", label: "Email (portal login)", type: "email" as const },
   { name: "country", label: "Publisher Country" },
-  { name: "password", label: "Password", type: "password" as const },
+  { name: "password", label: "Portal Login Password (leave blank on edit to keep)", type: "password" as const },
 ];
 
 export default async function PublishersPage({
