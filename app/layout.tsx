@@ -20,12 +20,9 @@ export const metadata: Metadata = {
   title: "ZaraSuno Admin",
   description: "ZaraSuno audiobook platform admin panel",
   icons: {
-    icon: [
-      { url: "/favicon.jpeg", type: "image/jpeg" },
-      { url: "/goldenlogo.png", type: "image/png" },
-    ],
-    shortcut: "/favicon.jpeg",
-    apple: "/favicon.jpeg",
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "512x512" }],
+    shortcut: "/favicon.png",
+    apple: { url: "/apple-icon.png", type: "image/png", sizes: "512x512" },
   },
 };
 
